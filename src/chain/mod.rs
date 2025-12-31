@@ -28,6 +28,9 @@ impl BlockChain {
         self.blocks[index].previous_block_hash() == self.blocks[index - 1].block_hash()
     }
     pub fn validate_time(&self, index: usize) -> bool {
+        if index == 0 {
+            return true;
+        }
         self.blocks[index].time_stamp() >= self.blocks[index - 1].time_stamp()
     }
     pub fn validate_chain(&self) -> bool {
@@ -49,7 +52,7 @@ impl BlockChain {
         true
     }
 
-    pub fn get_blocks(&mut self) -> &[Block] {
+    pub fn get_blocks(&self) -> &[Block] {
         &self.blocks
     }
 }

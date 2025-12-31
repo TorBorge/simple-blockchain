@@ -2,7 +2,7 @@ use ed25519_dalek::{Signature, VerifyingKey};
 use serde::Serialize;
 use serde_bytes::ByteArray;
 
-use crate::util::hash::{Address, Hash};
+use crate::util::hash::Address;
 
 pub type Payload = Option<ByteArray<256>>;
 
@@ -27,8 +27,8 @@ pub struct TxnCtx {
     version: u16,
     chain_id: u64,
     nonce: u64,
-    value: u64,
-    fee: u64,
+    value: std::num::NonZeroU64,
+    fee: std::num::NonZeroU64,
 }
 
 #[derive(Serialize, Debug)]
@@ -45,8 +45,8 @@ impl Transaction<Unsigned> {
         version: u16,
         chain_id: u64,
         nonce: u64,
-        value: u64,
-        fee: u64,
+        value: std::num::NonZeroU64,
+        fee: std::num::NonZeroU64,
     ) -> Self {
         Self {
             state: Unsigned {},
@@ -65,7 +65,7 @@ impl Transaction<Unsigned> {
 }
 
 impl<S: SigState> Transaction<S> {
-    pub fn get_fee(&self) -> u64 {
+    pub fn get_fee(&self) -> std::num::NonZeroU64 {
         self.ctx.fee
     }
     pub fn get_sender_pub_key(&self) -> VerifyingKey {

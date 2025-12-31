@@ -13,6 +13,16 @@ pub enum MempoolError {
     InsertErr(String),
 }
 
+impl std::fmt::Display for MempoolError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MempoolError::SearchErr(msg) | MempoolError::InsertErr(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl std::error::Error for MempoolError {}
+
 impl From<SystemTimeError> for MempoolError {
     fn from(value: SystemTimeError) -> Self {
         MempoolError::InsertErr(format!(
@@ -41,7 +51,7 @@ pub struct PoolEntry {
     id: Hash,
     time_stamp: i64,
     size: usize,
-    fee: u64,
+    fee: std::num::NonZeroU64,
     value_ratio: u64,
     txn: Transaction<Signed>,
     prio: PoolPriority,
@@ -56,10 +66,7 @@ impl Mempool {
         Self { pool: Vec::new() }
     }
 
-    pub fn insert_transaction(
-        &mut self,
-        txn: Transaction<Signed>,
-    ) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    pub fn insert_transaction(&mut self, txn: Transaction<Signed>) -> Result<()> {
         let time_stamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs() as i64;

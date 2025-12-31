@@ -27,8 +27,8 @@ impl Wallet {
         version: u16,
         chain_id: u64,
         nonce: u64,
-        value: u64,
-        fee: u64,
+        value: std::num::NonZeroU64,
+        fee: std::num::NonZeroU64,
     ) -> Transaction<Unsigned> {
         Transaction::new(
             self.sig_key.verifying_key(),
