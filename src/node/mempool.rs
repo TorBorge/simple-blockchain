@@ -80,8 +80,7 @@ impl Mempool {
             time_stamp,
             size,
             fee,
-            value_ratio: (size as u64) / fee,
-
+            value_ratio: fee.get() / (size as u64),
             txn: txn,
             prio: PoolPriority::Normal,
         };

@@ -2,13 +2,12 @@ mod mempool;
 mod mining_loop;
 use crate::{
     chain::BlockChain,
-    node::mining_loop::MiningLoop,
-    util::transaction::{Signed, Transactions},
+    node::{mempool::Mempool, mining_loop::MiningLoop},
 };
 
 pub struct Node {
     chain: BlockChain,
-    mempool: Transactions<Signed>,
+    mempool: Mempool,
     mining_loop: MiningLoop,
     //networking
 }
