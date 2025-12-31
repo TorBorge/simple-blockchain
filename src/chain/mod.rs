@@ -6,6 +6,7 @@ use crate::{
 };
 pub struct BlockChain {
     blocks: Vec<Block>,
+    chain_id: u64,
 }
 
 impl BlockChain {
@@ -19,6 +20,7 @@ impl BlockChain {
         let genesis_block = Block::new_genesis_block();
         Self {
             blocks: vec![genesis_block],
+            chain_id: rand::random(),
         }
     }
     pub fn validate_previous_hash(&self, index: usize) -> bool {

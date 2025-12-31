@@ -26,7 +26,7 @@ impl std::error::Error for MempoolError {}
 impl From<SystemTimeError> for MempoolError {
     fn from(value: SystemTimeError) -> Self {
         MempoolError::InsertErr(format!(
-            "fatal error occured while dating transaction: {}",
+            "fatal error occurred while dating transaction: {}",
             value,
         ))
     }
@@ -35,7 +35,7 @@ impl From<SystemTimeError> for MempoolError {
 impl From<bcs::Error> for MempoolError {
     fn from(value: bcs::Error) -> Self {
         MempoolError::InsertErr(format!(
-            "fatal error occured while serializing transaction: {}",
+            "fatal error occurred while serializing transaction: {}",
             value,
         ))
     }
