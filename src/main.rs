@@ -17,7 +17,7 @@ fn main() {
     println!("{:?}", SystemTime::now());
 
     for block in chain.iter() {
-        println!("time stamp {:?}", block.time_stamp());
+        println!("time stamp {:?}", block.timestamp());
         println!("Hash of the block {:?}", block.block_hash());
         println!("All the transactions: {:?}", block.data());
     }
