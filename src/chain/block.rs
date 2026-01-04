@@ -11,6 +11,7 @@ pub struct BlockHeaders {
     version: String,
     time_stamp: i64,
     previous_block_hash: Hash,
+    previous_block: Option<Box<Block>>,
     payload_hash: Hash,
     target: usize,
     nonce: u64,
@@ -18,15 +19,20 @@ pub struct BlockHeaders {
 }
 
 impl BlockHeaders {
-    fn new(previous_block_hash: Hash, payload_hash: Hash) -> Self {
+    fn new(previous_block: Option<Box<Block>>, payload_hash: Hash) -> Self {
         let time_stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as i64;
+
+        let previous_block_hash = previous_block
+            .as_deref()
+            .map_or(Hash::default(), Hash::from);
         Self {
+            previous_block_hash,
+            previous_block: previous_block,
             version: String::from("v1.0"),
             time_stamp,
-            previous_block_hash,
             payload_hash,
             target: 2,
             nonce: 0,
@@ -51,6 +57,7 @@ impl BlockBody {
     }
 }
 
+#[derive(Serialize)]
 pub struct Block {
     headers: BlockHeaders,
     body: BlockBody,
@@ -58,11 +65,11 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(txns: Transactions<Signed>, prev_block_hash: Hash) -> Block {
-        let body = BlockBody::new(txns);
+    pub fn new(txs: Transactions<Signed>, prev_block: Option<Box<Block>>) -> Block {
+        let body = BlockBody::new(txs);
         let payload_hash = Hash::from(&body);
 
-        let mut headers = BlockHeaders::new(prev_block_hash.clone(), payload_hash);
+        let mut headers = BlockHeaders::new(prev_block, payload_hash);
         headers.compute_nonce();
         let block_hash = Hash::from(&headers);
 
@@ -74,13 +81,13 @@ impl Block {
     }
 
     pub fn new_genesis_block() -> Block {
-        Self::new(vec![], Hash::default())
+        Self::new(vec![], None)
     }
     //get methods
     pub fn block_hash(&self) -> &Hash {
         &self.block_hash
     }
-    pub fn previous_block_hash(&self) -> &Hash {
+    pub fn prev_block_hash(&self) -> &Hash {
         &self.headers.previous_block_hash
     }
     pub fn payload_hash(&self) -> &Hash {
@@ -99,5 +106,39 @@ impl Block {
     }
     pub fn validate_payload_hash(&self) -> bool {
         Hash::from(&self.body) == self.headers.payload_hash
+    }
+
+    pub fn validate_time(&self) -> bool {
+        if let Some(ref block) = self.headers.previous_block {
+            return self.time_stamp() > block.time_stamp();
+        };
+        true
+    }
+    pub fn validate_previous_hash(&self) -> bool {
+        if let Some(ref block) = self.headers.previous_block {
+            return self.prev_block_hash() == block.block_hash();
+        };
+        true
+    }
+    pub fn validate_block(&self) -> bool {
+        self.validate_previous_hash()
+            && self.validate_time()
+            && self.validate_payload_hash()
+            && self.validate_block_hash()
+    }
+}
+
+pub struct BlockIter<'a> {
+    pub next: Option<&'a Block>,
+}
+
+impl<'a> Iterator for BlockIter<'a> {
+    type Item = &'a Block;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.map(|block| {
+            self.next = block.headers.previous_block.as_deref();
+            block
+        })
     }
 }

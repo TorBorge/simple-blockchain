@@ -1,60 +1,42 @@
 mod block;
 
 use crate::{
-    chain::block::Block,
+    chain::block::{Block, BlockIter},
     util::transaction::{Signed, Transactions},
 };
 pub struct BlockChain {
-    blocks: Vec<Block>,
+    latest_block: Option<Box<Block>>,
     chain_id: u64,
 }
 
 impl BlockChain {
-    pub fn add_block(&mut self, txns: Transactions<Signed>) {
-        let prev_blok = self.blocks.last().unwrap();
-        let new_block = Block::new(txns, prev_blok.block_hash().clone());
+    pub fn add_block(self, txs: Transactions<Signed>) -> Self {
+        let prev_blok = self.latest_block;
+        let new_block = Some(Box::new(Block::new(txs, prev_blok)));
 
-        self.blocks.push(new_block);
+        Self {
+            latest_block: new_block,
+            ..self
+        }
     }
     pub fn new() -> Self {
-        let genesis_block = Block::new_genesis_block();
         Self {
-            blocks: vec![genesis_block],
+            latest_block: Some(Box::new(Block::new_genesis_block())),
             chain_id: rand::random(),
         }
     }
-    pub fn validate_previous_hash(&self, index: usize) -> bool {
-        if index == 0 {
-            return true;
-        }
-        self.blocks[index].previous_block_hash() == self.blocks[index - 1].block_hash()
-    }
-    pub fn validate_time(&self, index: usize) -> bool {
-        if index == 0 {
-            return true;
-        }
-        self.blocks[index].time_stamp() >= self.blocks[index - 1].time_stamp()
-    }
     pub fn validate_chain(&self) -> bool {
-        for index in (0..self.blocks.len()).rev() {
-            let block = &self.blocks[index];
-            if !block.validate_block_hash() {
-                return false;
-            }
-            if !block.validate_payload_hash() {
-                return false;
-            }
-            if !self.validate_previous_hash(index) {
-                return false;
-            }
-            if !self.validate_time(index) {
+        for block in self.iter() {
+            if !block.validate_block() {
                 return false;
             }
         }
         true
     }
 
-    pub fn get_blocks(&self) -> &[Block] {
-        &self.blocks
+    pub fn iter(&self) -> BlockIter<'_> {
+        BlockIter {
+            next: self.latest_block.as_deref(),
+        }
     }
 }
